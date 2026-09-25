@@ -1,0 +1,524 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黑凱門鱷的雨林家園</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    
+    <style>
+        :root {
+            --forest-green: #2d5a27;   /* 深綠色 */
+            --leaf-light: #e8f5e9;     /* 淺綠色 */
+            --toucan-orange: #ff9800;  /* 橘色 */
+            --wood-brown: #795548;     /* 棕色 */
+            --text-dark: #1b331a;      /* 深綠文字 */
+            --ocean-green: #f1f8e9;    /* 按鈕區背景：淺綠色 */
+            --ice-white: #ffffff;      
+            --ice-shadow: #558b2f;     
+        }
+
+        body { 
+            margin: 0; font-family: "Microsoft JhengHei", sans-serif; 
+            background-color: #ffffff; color: var(--text-dark);
+            display: flex; flex-direction: column; align-items: center; overflow-x: hidden;
+        }
+
+        .header-section {
+            width: 100%; background-color: var(--forest-green);
+            padding-bottom: 60px; position: relative;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .cloud-speech {
+            position: relative; background: #fff; border-radius: 30px;
+            padding: 12px 25px; margin-top: 25px; font-weight: bold; font-size: 18px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; align-items: center;
+            z-index: 10; color: var(--forest-green);
+        }
+        .cloud-speech::after {
+            content: ''; position: absolute; bottom: -8px; left: 50%;
+            width: 16px; height: 16px; background: white; border-radius: 50%; transform: translateX(-50%);
+        }
+
+        model-viewer { width: 100%; height: 320px; background: transparent; }
+
+        /* 🍂 落葉堆轉場區 */
+        .ice-transition {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 80px; 
+            display: flex; justify-content: center; align-items: flex-end; pointer-events: none;
+        }
+        .ice-l, .ice-r { width: 60%; height: 100%; position: absolute; bottom: -10px; }
+        .ice-l { 
+            background: #689f38; left: -10%;
+            border-radius: 100% 0% 100% 0% / 100% 100% 0% 0%;
+            transform: rotate(-5deg); z-index: 2;
+        }
+        .ice-r { 
+            background: #8bc34a; right: -10%;
+            border-radius: 0% 100% 0% 100% / 100% 100% 0% 0%;
+            transform: rotate(5deg); opacity: 0.9; z-index: 1;
+        }
+        
+        /* 🍃 按鈕內容區背景色改為淺綠 */
+        .ocean-content {
+            width: 100%; padding: 40px 20px; box-sizing: border-box;
+            background-color: var(--ocean-green); 
+            display: flex; flex-direction: column; align-items: center;
+            position: relative; min-height: 800px;
+        }
+
+        .ice-grid {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 20px; width: 100%; max-width: 400px; padding: 20px 0;
+            z-index: 5;
+        }
+        
+        /* 1. 葉子按鈕基本樣式 */
+        .ice-block {
+            position: relative; 
+            width: 140px; 
+            height: 90px;
+            background: #8bc34a;
+            /* 葉子形狀：左上、右下是尖的 */
+            border-radius: 0% 100% 0% 100% / 0% 100% 0% 100%;
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 18px;
+            color: var(--forest-green);
+            /* 3D 厚度陰影 */
+            box-shadow: 0 8px 0 var(--ice-shadow), 0 15px 25px rgba(0,0,0,0.08);
+            transition: all 0.15s ease; /* 讓動作更靈敏 */
+            z-index: 5;
+        }
+        
+        /* 2. 讓文字轉回來（保持水平） */
+        .ice-block span {
+            display: inline-block;
+            transition: all 0.15s ease; /* 這一行很重要，讓轉動變滑順，不是死板板的切換 */
+        }
+        
+        /* 讓所有葉子按鈕都統一向左斜 8 度 */
+        .ice-grid .ice-block {
+            transform: rotate(-8deg);
+            transition: all 0.15s ease;
+        }
+        /* 讓所有按鈕內的文字都統一向右轉回 8 度，保持水平 */
+        .ice-block span {
+            display: inline-block;
+            transform: rotate(8deg);
+        }
+        /* 移除（或註解掉）原本針對 nth-child(even) 的旋轉設定 */
+        /* 不要這段了： .ice-grid .ice-block:nth-child(even) { transform: rotate(8deg); } */
+        
+        /* 所有按鈕按下去時：保持左斜 8 度，並向下位移 6px */
+        .ice-block:active {
+            transform: translateY(6px) rotate(0deg) !important;
+            box-shadow: 0 2px 0 var(--ice-shadow), 0 5px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* 同時，因為葉子變 0 度了，文字也要跟著變回 0 度才會是正的 */
+        .ice-block:active span {
+            transform: rotate(0deg) !important;
+        }
+        
+        /* 📖 資訊展示框：綠色光暈特效 */
+        .info-card {
+            display: none; width: 95%; max-width: 500px;
+            margin: 25px auto; background: #f1f8e9 !important;
+            border-radius: 30px; padding: 25px;
+            border: 3px solid #8bc34a; box-sizing: border-box;
+            z-index: 10;
+            box-shadow: 0 0 30px rgba(139, 195, 74, 0.6), 0 0 10px rgba(139, 195, 74, 0.3);
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ice-photo-frame {
+            width: 100%; background: var(--leaf-light);
+            border-radius: 20px 50px 30px 40px; padding: 10px;
+            box-shadow: 0 10px 0 var(--wood-brown);
+            margin-bottom: 25px; display: flex; justify-content: center; align-items: center;
+            overflow: hidden; box-sizing: border-box;
+        }
+        .ice-photo-frame img { width: 100%; height: 220px; object-fit: cover; border-radius: 20px; }
+
+        .description-text { font-size: 18px; line-height: 1.8; color: #2c689c; text-align: left; }
+        .description-text b { color: #1a4a73; font-size: 20px; }
+
+        /* 翻轉卡片容器 */
+        .knowledge-card-container { perspective: 1000px; width: 100%; height: 250px; margin-bottom: 25px; cursor: pointer; }
+        .knowledge-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.8s; transform-style: preserve-3d; }
+        .knowledge-card-container.flipped .knowledge-card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+            border-radius: 30px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 20px; box-sizing: border-box; box-shadow: 0 10px 0 #ccddec;
+        }
+        .card-front { background: #fff; border: 3px solid #8bc34a; color: var(--forest-green); }
+        .card-back { background: #fff; border: 3px solid #ffd700; transform: rotateY(180deg); color: #333; }
+
+        .photo-wall { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .photo-wall img, .photo-wall iframe { width: 100%; height: 110px; border-radius: 18px; object-fit: cover; }
+
+        .game-btn {
+            width: 100%; padding: 18px; margin: 10px 0; border: none;
+            background: #fff; border-radius: 20px; color: var(--forest-green);
+            font-size: 18px; font-weight: bold; box-shadow: 0 5px 0 #558b2f; cursor: pointer;
+        }
+        .correct { background: #e6ffed !important; color: #22863a !important; box-shadow: 0 5px 0 #22863a !important; }
+
+        /* 控制翻轉卡片正面 emoji 的大小 */
+        .card-front .q-mark {
+            font-size: 60px;    /* 這裡的 60px 就是讓你覺得「好看又夠大」的大小 */
+            margin-bottom: 10px; /* 讓 emoji 跟下面的文字保持一點距離 */
+            display: block;      /* 確保它獨立佔一行 */
+        }
+        
+        /* 成就彈窗背景（全螢幕半透明黑） */
+        .achievement-overlay {
+            display: none; /* 平時隱藏 */
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* 彈窗主體卡片 */
+        .achievement-card {
+            background: #ffeb3b; /* 暖黃色背景 */
+            background: linear-gradient(180deg, #ffe082 0%, #ffca28 100%);
+            width: 85%;
+            max-width: 350px;
+            padding: 30px 20px;
+            border-radius: 40px;
+            text-align: center;
+            position: relative;
+            border: 5px solid #fff;
+            box-shadow: 0 0 30px rgba(255, 235, 59, 0.5);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        /* 彈入動畫 */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        /* 徽章圖片樣式 */
+        .medal-img {
+            width: 200px;
+            margin-bottom: 20px;
+        }
+        .congrats-title {
+            font-size: 28px;
+            color: #795548; /* 深咖啡色文字 */
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .achievement-btn {
+            background: #fff;
+            border: none;
+            padding: 12px 40px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff9800;
+            box-shadow: 0 4px 0 #fb8c00;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .achievement-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #fb8c00;
+        }
+        
+        /* 彩帶動畫容器 */
+        .confetti-container {
+            position: absolute; width: 100%; height: 100%;
+            top: 0; left: 0; pointer-events: none; overflow: hidden;
+            display: none; z-index: 100;
+        }
+        .confetti {
+            position: absolute; width: 10px; height: 10px;
+            background: #ffeb3b; animation: fall 2s infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(200px) rotate(360deg); opacity: 0; }
+        }
+        
+        /* 遊戲進度條 */
+        .game-progress {
+            width: 100%; height: 10px; background: #ddd;
+            border-radius: 5px; margin-bottom: 15px; overflow: hidden;
+        }
+        .progress-fill {
+            width: 20%; height: 100%; background: var(--forest-green);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-section">
+        <div class="cloud-speech">哈囉！我是黑凱門鱷魚！🐊</div>
+        <model-viewer src="./blackcaiman_v1.glb" auto-rotate camera-controls ar></model-viewer>
+        <div class="ice-transition">
+            <div class="ice-l"></div>
+            <div class="ice-r"></div>
+        </div>
+    </div>
+
+    <div class="ocean-content">
+        <div class="ice-grid">
+            <div class="ice-block" onclick="openBox('box1')"><span>認識我</span></div>
+            <div class="ice-block" onclick="openBox('box2')" style="margin-top: 15px;"><span>小小秘密</span></div>
+            <div class="ice-block" onclick="openBox('box3')"><span>互動遊戲</span></div>
+            <div class="ice-block" onclick="openBox('box4')" style="margin-top: 15px;"><span>生活影像</span></div>
+        </div>
+
+        <div id="box1" class="info-card">
+            <div class="ice-photo-frame">
+                <img src="./crocodile_photo_01.jpg" alt="黑凱門鱷真實照">
+            </div>
+            <div style="background: #ffffff; border-radius: 20px; padding: 20px; margin-bottom: 25px; border: 2px solid #2d5a27; position: relative;">
+                <p style="margin: 8px 0;"><b>🆔 名字：</b> 黑凱門鱷 (Black Caiman)</p>
+                <p style="margin: 8px 0;"><b>🏠 住址：</b> 亞馬遜盆地的河流與湖泊</p>
+                <p style="margin: 8px 0;"><b>🍴 愛吃：</b> 魚類、水豚，甚至是小型的凱門鱷</p>
+                <p style="margin: 8px 0;"><b>🏅 專長：</b> 夜間狩獵大師，也是亞馬遜最大的掠食者</p>
+                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #2d5a27; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="playAudio()">
+                    <span style="font-size: 18px; color: var(--forest-green); font-weight: bold;">🔊 點我來聽聽我的叫聲</span>
+                </div>
+            </div>
+            <h3>🔍 身體特徵</h3>
+            <div class="description-text">
+                <p><b>● 黑色盔甲</b><br>我的鱗片是深褐黑色的，不僅能保護自己，還能幫助我在白天吸收陽光的熱量！</p>
+                <p><b>● 強大尾巴</b><br>尾巴非常有力，就像船的推進器，讓我在水裡快速游泳前進！</p>
+                <p><b>● 骨質眼眶</b><br>我的眼睛上方有隆起的骨頭，看起來就像戴了一副帥氣的墨鏡！</p>
+            </div>
+        </div>
+
+        <div id="box2" class="info-card">
+            <h3 style="text-align: center; width: 100%; display: block;">💡 點點看，找秘密！</h3>
+            <div class="knowledge-card-container" onclick="this.classList.toggle('flipped')">
+                <div class="knowledge-card-inner">
+                    <div class="card-front">
+                        <div class="q-mark">❓</div>
+                        <p><b>我的皮膚顏色為什麼這麼黑？</b></p>
+                        <small>(點一下翻開看答案)</small>
+                    </div>
+                    <div class="card-back">
+                        <p><b>✨ 為了像忍者躲在暗處！</b></p>
+                        <p style="font-size: 16px;">在黑漆漆的夜晚河水中，我的黑色皮膚是最完美的偽裝，讓獵物看不見我！</p>
+                    </div>
+                </div>
+            </div>
+            <div class="knowledge-card-container" onclick="this.classList.toggle('flipped')">
+                <div class="knowledge-card-inner">
+                    <div class="card-front">
+                        <div class="q-mark">🦷</div>
+                        <p><b>我的牙齒掉光了怎麼辦？</b></p>
+                        <small>(點一下翻開看答案)</small>
+                    </div>
+                    <div class="card-back">
+                        <p><b>✨ 不用擔心，它會一直長！</b></p>
+                        <p style="font-size: 16px;">如果牙齒斷了，下方很快就會長出新牙齒，我一生可以換好幾千顆牙齒！</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="box3" class="info-card" style="position: relative;">
+            <div id="confetti" class="confetti-container"></div>
+            
+            <h3 id="game-title" style="text-align: center;">🎮 森林探險：第一關</h3>
+            <div class="game-progress"><div id="progress" class="progress-fill"></div></div>
+            
+            <div id="game-content">
+                <div class="ice-photo-frame">
+                    <img id="game-img" src="./crocodile_photo_01.jpg" alt="遊戲圖片">
+                
+                </div>
+                
+                <div class="description-text" style="text-align: center; margin-bottom: 20px;">
+                    <p id="game-question">我是亞馬遜最大的掠食者，我的皮膚是什麼顏色呢？</p>
+                </div>
+                
+                <div id="options-area">
+                    <button class="game-btn" onclick="nextStep(1, true)">🖤 帥氣的黑色</button>
+                    <button class="game-btn" onclick="nextStep(1, false)">💖 可愛的粉色</button>
+                </div>
+            </div>
+            
+            <p id="msg" style="text-align:center; font-weight:bold; margin-top:15px; font-size: 18px;"></p>
+        </div>
+
+        <div id="box4" class="info-card">
+            <h3>🖼️ 影像牆</h3>
+            <div class="photo-wall">
+                <img src="./crocodile_photo_02.jpg">
+                <iframe src="https://www.youtube.com/embed/h0eM5IqUO-0?rel=0"></iframe>
+                <img src="./crocodile_photo_03.jpg">
+                <img src="./crocodile_photo_04.jpg">
+            </div>
+        </div>
+    </div>
+
+    <audio id="snd" src="https://cdn.jsdelivr.net/gh/yenmeiomni/animal-game@main/crocodile_sound_01.mp3"></audio>
+
+    <script>
+        // --- 基礎功能區 ---
+        function playAudio() { document.getElementById('snd').play(); }
+    
+        function openBox(id) {
+            document.querySelectorAll('.info-card').forEach(c => c.style.display = 'none');
+            const target = document.getElementById(id);
+            if(target) {
+                target.style.display = 'block';
+                target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // --- 闖關遊戲變數 ---
+        let currentStep = 1;
+        let lastLevelScore = { river: false, grass: false };
+
+        // 題目資料庫 (你可以隨時修改這裡的文字)
+        const quizData = {
+            1: { q: "我的皮膚是什麼顏色，最方便在晚上躲起來？", img: "./crocodile_photo_01.jpg", opt: [
+                { t: "帥氣的黑色", ok: true }, { t: "可愛的粉色", ok: false }
+            ]},
+            2: { q: "天氣好熱我都會去做什麼事？", img: "./crocodile_photo_03.jpg", opt: [
+                { t: "我會去河流裡游泳", ok: true }, { t: "我會去樹上遮陽", ok: false }
+            ]},
+            3: { q: "通常我會一個人待在水裡，但遇到其他夥伴時我也會做什麼？", img: "./crocodile_photo_02.jpg", opt: [
+                { t: "跟著夥伴待在草地上做日光浴", ok: true }, { t: "躲在草叢裡面看夥伴", ok: false }
+            ]},
+            4: { q: "我強壯的尾巴有什麼功能？", img: "./crocodile_photo_05.jpg", opt: [
+                { t: "游泳前進", ok: true }, { t: "飛向宇宙", ok: false }
+            ]}
+        };
+        
+        // --- 闖關邏輯 ---
+        function nextStep(step, isCorrect) {
+            const m = document.getElementById('msg');
+            if (isCorrect) {
+                m.innerText = "🎉 太棒了！答對了！";
+                m.style.color = "#22863a";
+                showConfetti(); // 答對時噴彩帶
+
+                setTimeout(() => {
+                    currentStep++;
+                    if (currentStep <= 4) {
+                        updateQuiz(currentStep);
+                    } else {
+                        showFinalLevel(); // 進入最後一關
+                    }
+                }, 1200);
+            } else {
+                m.innerText = "❌ 再想想看喔！";
+                m.style.color = "#d73a49";
+            }
+        }
+
+        function updateQuiz(step) {
+            const data = quizData[step];
+            document.getElementById('game-title').innerText = `🎮 森林探險：第 ${step} 關`;
+            document.getElementById('progress').style.width = (step * 20) + "%";
+            document.getElementById('game-img').src = data.img;
+            document.getElementById('game-question').innerText = data.q;
+            document.getElementById('msg').innerText = "";
+
+            let optHtml = "";
+            data.opt.forEach(item => {
+                optHtml += `<button class="game-btn" onclick="nextStep(${step}, ${item.ok})">${item.t}</button>`;
+            });
+            document.getElementById('options-area').innerHTML = optHtml;
+        }
+
+        function showFinalLevel() {
+            document.getElementById('game-title').innerText = `🎮 終極挑戰：找到我的家`;
+            document.getElementById('progress').style.width = "100%";
+            document.getElementById('game-img').src = "./medal1.png";
+            document.getElementById('game-question').innerHTML = "<b>最後一步！</b>請在現場積木中找出我的家，<br>要把兩個正確的家都點開才能通關喔！";
+            document.getElementById('msg').innerText = "";
+        
+            document.getElementById('options-area').innerHTML = `
+                <button class="game-btn" id="btn-river" onclick="checkFinal('river')">💧 涼爽的海水/河流積木</button>
+                <button class="game-btn" id="btn-grass" onclick="checkFinal('grass')">🌿 濕熱的草地積木</button>
+                <button class="game-btn" onclick="nextStep(5, false)">❄️ 寒冷的冰原積木</button>
+            `;
+        }
+
+        function checkFinal(type) {
+            const m = document.getElementById('msg');
+            if (type === 'river') {
+                lastLevelScore.river = true;
+                document.getElementById('btn-river').classList.add('correct');
+            } else if (type === 'grass') {
+                lastLevelScore.grass = true;
+                document.getElementById('btn-grass').classList.add('correct');
+            }
+
+            if (lastLevelScore.river && lastLevelScore.grass) {
+                m.innerText = "🎊 恭喜！你找齊了所有的家！";
+                showConfetti();
+                setTimeout(() => { showAchievement(); }, 1500);
+            } else {
+                m.innerText = "答對一個了！還差一個地方喔！";
+                m.style.color = "#2d5a27";
+            }
+        }
+
+        // --- 特效與彈窗控制 ---
+        function showConfetti() {
+            const container = document.getElementById('confetti');
+            container.style.display = 'block';
+            container.innerHTML = '';
+            for (let i = 0; i < 30; i++) {
+                const div = document.createElement('div');
+                div.className = 'confetti';
+                div.style.left = Math.random() * 100 + "%";
+                div.style.backgroundColor = ["#ffeb3b", "#ff9800", "#4caf50", "#2196f3"][Math.floor(Math.random() * 4)];
+                div.style.animationDelay = Math.random() * 2 + "s";
+                container.appendChild(div);
+            }
+            setTimeout(() => { container.style.display = 'none'; }, 2000);
+        }
+
+        function showAchievement() {
+            document.getElementById('achievementPopup').style.display = 'flex';
+        }
+
+        function closeAchievement() {
+            document.getElementById('achievementPopup').style.display = 'none';
+        }
+</script>
+    <div id="achievementPopup" class="achievement-overlay">
+        <div class="achievement-card">
+            <h2 class="congrats-title">恭喜完成挑戰！</h2>
+            <p style="color: #8d6e63; font-weight: bold;">你獲得了一枚成就徽章！</p>
+        
+            <img src="./medal.png" class="medal-img" alt="成就徽章">
+        
+            <div style="background: rgba(255,255,255,0.5); padding: 10px; border-radius: 20px; margin: 10px 0;">
+                <b style="color: #5d4037;">挑戰達人</b><br>
+                <small style="color: #795548;">成功完成挑戰，太棒了！</small>
+            </div>
+
+            <button class="achievement-btn" onclick="closeAchievement()">太棒了！</button>
+        </div>
+    </div>
+</body>
+</html>
